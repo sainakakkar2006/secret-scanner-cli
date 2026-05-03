@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "secret-scanner-cli"
 version = "0.1.0"
-description = "A dependency-free CLI for scanning source files for accidental secrets."
+description = "A small CLI that scans files for secret-like text."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Saina Kakkar" }]
@@ -16,4 +16,3 @@ secret-scanner = "secret_scanner.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
