@@ -1,10 +1,36 @@
+<!--
+  README.md
+-->
+
+<p align="center">
+  <!-- BADGES:START -->
+  <a href="#"><img alt="Python" src="https://img.shields.io/badge/python-3.9%2B-blue"></a>
+  <a href="#"><img alt="stdlib only" src="https://img.shields.io/badge/dependencies-stdlib%20only-green"></a>
+  <a href="#"><img alt="CI friendly" src="https://img.shields.io/badge/exit%20codes-CI%20friendly-2671E5"></a>
+  <a href="#"><img alt="License" src="https://img.shields.io/badge/license-MIT-green"></a>
+  <!-- BADGES:END -->
+</p>
+
 # Secret Scanner CLI
 
-**Catch leaked credentials before they reach a public repository.**
+Author: Saina Kakkar
 
-A DevSecOps command-line tool that scans a codebase for secret-like content — API keys, access tokens, passwords, private-key headers — masks the sensitive values in its output, and returns CI-friendly exit codes so pipelines can block a leaky commit automatically.
+### Project Description
+A DevSecOps command-line tool that catches leaked credentials before they
+reach a public repository. It scans a codebase for secret-like content (API
+keys, access tokens, passwords, private-key headers), masks the sensitive
+values in its output, and returns CI-friendly exit codes so a pipeline can
+block a leaky commit automatically.
 
-## What it detects
+```mermaid
+graph LR
+  A[Walk files] --> B[Detectors<br/>regex + entropy]
+  B --> C[Findings]
+  C --> D[Mask values]
+  D --> E[Text or JSON report<br/>+ exit code for CI]
+```
+
+## What It Detects
 
 - Secret-like environment variable assignments (`API_KEY=...`, `PASSWORD=...`)
 - Private-key headers (`-----BEGIN ... PRIVATE KEY-----`)
@@ -12,9 +38,10 @@ A DevSecOps command-line tool that scans a codebase for secret-like content — 
 - AWS-style access key IDs
 - Long high-entropy strings that look like credentials
 
-Findings are heuristic by design: the goal is to warn loudly before a push, not to prove a string is a live credential.
+Findings are heuristic by design. The goal is to warn loudly before a push,
+not to prove a string is a live credential.
 
-## Quick start
+## Quick Start
 
 Scan the bundled sample project:
 
@@ -28,13 +55,7 @@ Write a JSON report (for CI artifacts or tooling):
 PYTHONPATH=src python -m secret_scanner scan examples/sample_project --format json --out reports/findings.json
 ```
 
-Run the test suite:
-
-```bash
-PYTHONPATH=src python -m unittest discover -s tests
-```
-
-### Example output
+### Example Output
 
 ```
 2 finding(s)
@@ -46,11 +67,15 @@ examples/sample_project/config.py:1 [MEDIUM] Environment assignment with secret-
   value: PASS*****************word
 ```
 
-Values are **masked on purpose** — a secret scanner that echoes full secrets back to the terminal (or into CI logs) would become a leak vector itself.
+Notice the values are masked. That is on purpose. A secret scanner that
+echoes full secrets back to the terminal, or into CI logs, would become a
+leak vector itself. I kept the first and last few characters visible so you
+can still tell which secret it found.
 
-## CI integration
+## CI Integration
 
-By default the scanner exits non-zero when it finds anything, so a single line in a pipeline gates the build:
+By default the scanner exits non-zero when it finds anything, so a single
+line in a pipeline gates the build:
 
 ```yaml
 - run: PYTHONPATH=src python -m secret_scanner scan .
@@ -58,9 +83,26 @@ By default the scanner exits non-zero when it finds anything, so a single line i
 
 Use `--no-fail` for report-only runs.
 
-## Design notes
+## Verify
 
-Detection rules are small, independent matchers (regex + entropy heuristics) that can be added or tuned without touching the scanning engine. Output masking and exit-code behavior are unit-tested edge cases, not afterthoughts — the failure modes of security tooling are exactly where it needs tests.
+```bash
+PYTHONPATH=src python -m unittest discover -s tests
+```
+
+## Additional Notes
+
+- **Tuning entropy was the annoying part.** A threshold that catches real
+  tokens also flags things like git hashes and minified code. I settled on
+  combining entropy with length and context (where the string appears)
+  instead of entropy alone, which cut most of the noise in my test files.
+- **One giant regex was the first attempt.** It became unreadable fast.
+  Each rule is now a small, independent matcher that can be added or tuned
+  without touching the scanning engine. My
+  [mcpscan](https://github.com/sainakakkar2006/mcpscan) project later reused
+  these detectors directly, which told me the split was right.
+- **The failure modes get tests.** Output masking and exit-code behavior are
+  unit-tested edge cases, not afterthoughts. For security tooling, the
+  failure modes are exactly where tests matter.
 
 ## License
 
