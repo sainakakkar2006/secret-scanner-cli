@@ -9,7 +9,7 @@
   <!-- BADGES:END -->
 </p>
 
-# secret-scanner-cli
+# pii-secret-scanner
 
 Author: Saina Kakkar
 
